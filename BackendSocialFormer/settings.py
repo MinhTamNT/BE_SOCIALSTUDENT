@@ -16,14 +16,12 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-import cloudinary
-import cloudinary.uploader
 import cloudinary.api
-
+from decouple import config
 cloudinary.config(
-    cloud_name="dmdljcwau",
-    api_key="751729637915529",
-    api_secret="-9greGmb76IjiPCDjePMEPuuz1I",
+    cloud_name= config('CLOUND_NAME'),
+    api_key=config('API_KEY'),
+    api_secret=config('API_SECRET'),
     secure=True
 )
 

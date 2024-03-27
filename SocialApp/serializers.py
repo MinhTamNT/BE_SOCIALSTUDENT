@@ -84,5 +84,6 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'user', 'post', 'comment', 'parent_comment', 'have_replies', 'created_at']
 
-
+class Story(serializers.ModelSerializer):
+    pass
 

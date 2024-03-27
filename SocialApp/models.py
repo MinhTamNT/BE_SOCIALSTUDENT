@@ -76,6 +76,7 @@ class Image(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
@@ -85,3 +86,17 @@ class Comment(models.Model):
 
     def __str__(self):
         return f'{self.user.username}: {self.comment[:30]}'
+
+class Story (BaseModel):
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='stories')
+    expiration_time = models.DateTimeField()
+
+    def __str__(self):
+        return f'Story của {self.user.username}'
+class StoryMedia(BaseModel):
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='media')
+    media_type = models.CharField(max_length=10, choices=(('image', 'Image'), ('video', 'Video')))
+    media_file = CloudinaryField('media')
+
+    def __str__(self):
+        return f'Story Media - {self.media_type}'

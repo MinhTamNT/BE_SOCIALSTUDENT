@@ -6,6 +6,15 @@ from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost
 
 
 class FormerSerializer(serializers.ModelSerializer):
+    avatar_user = SerializerMethodField(source='avatar_user')
+
+    def get_avatar_user(self, user):
+        if user.avatar_user:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(user.avatar_user)
+            return user.avatar_user.url
+        return None
     class Meta:
         model = Former
         fields = ['id', 'first_name', 'last_name', 'email', 'username', 'password', 'avatar_user', 'cover_photo',
@@ -17,6 +26,14 @@ class FormerSerializer(serializers.ModelSerializer):
 
 
 class LecturerSerializer(serializers.ModelSerializer):
+    avatar_user = SerializerMethodField(source='avatar_user')
+    def get_avatar_user(self, user):
+        if user.avatar_user:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(user.avatar_user)
+            return user.avatar_user.url
+        return None
     class Meta:
         model = Former
         fields = ['id', 'first_name', 'last_name', 'email', 'username', 'password', 'avatar_user', 'cover_photo',

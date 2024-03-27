@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'BackendSocialFormer.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'socailstudent',
+        'NAME': 'soicalstudent',
         'USER': 'root',
         'PASSWORD': '120900',
         'HOST': ''
@@ -180,3 +180,4 @@ CELERY_TASK_TRACK_STARTED = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173"
 ]
+APPEND_SLASH=False

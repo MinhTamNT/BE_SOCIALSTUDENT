@@ -100,3 +100,12 @@ class StoryMedia(BaseModel):
 
     def __str__(self):
         return f'Story Media - {self.media_type}'
+class Friend(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_friends')
+    friend = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_users')
+
+    class Meta:
+        unique_together = ['user', 'friend']
+
+    def __str__(self):
+        return f'{self.user.username} - {self.friend.username}'

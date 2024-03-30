@@ -13,9 +13,9 @@ import cloudinary.uploader
 from BackendSocialFormer.celery import send_otp
 # from .utils import *
 from SocialApp import perms
-from SocialApp.models import User, Post, Image, Comment, ReactionPost
+from SocialApp.models import User, Post, Image, Comment, ReactionPost,Story,Friend,StoryMedia
 from SocialApp.serializers import FormerSerializer, LecturerSerializer, PostSerializer, CommentSerializer, \
-    ReactionSerializer
+    ReactionSerializer,StorySerializer,FriendSerializer
 
 
 # Create your views here.
@@ -357,3 +357,41 @@ class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyA
         except Exception as e:
             print(f"Error: {str(e)}")
             return Response({str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class StoryViewSet(viewsets.ViewSet,generics.ListAPIView):
+    queryset = Story.objects.all()
+    serializer_class = StorySerializer
+
+    @action(detail=False, methods=['POST'], url_path='create_story')
+    def create_story(self, request):
+        try:
+            user = request.user
+            # Kiểm tra xem có tải lên bất kỳ tệp phương tiện nào không
+            if 'media_files' not in request.FILES or len(request.FILES.getlist('media_files')) == 0:
+                return Response({"error": "At least one media file (image or video) is required."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            story = Story.objects.create(user=user)
+            uploaded_files = request.FILES.getlist('media_files')
+            for uploaded_file in uploaded_files:
+                media_type = 'image' if uploaded_file.content_type.startswith('image') else 'video'
+
+                if media_type == 'video':
+                    upload_result = cloudinary.uploader.upload_large(uploaded_file)
+                    media_url = upload_result['secure_url']
+                else:
+                    upload_result = cloudinary.uploader.upload(uploaded_file)
+                    media_url = upload_result['secure_url']
+
+                story_media = StoryMedia.objects.create(
+                    story=story,
+                    media_type=media_type,
+                    media_file=media_url
+                )
+
+            return Response({"message": "Story created successfully.", "video_url": media_url}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

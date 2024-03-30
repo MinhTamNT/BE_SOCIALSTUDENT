@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework_recursive.fields import RecursiveField
 
-from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost,Story
+from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost,Story,Friend
 
 
 class FormerSerializer(serializers.ModelSerializer):
@@ -88,4 +88,8 @@ class StorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Story
         fields = '__all__'
+class FriendSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Friend
+        fields = '__all_'
 

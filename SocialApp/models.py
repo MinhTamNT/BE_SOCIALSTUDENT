@@ -89,7 +89,6 @@ class Comment(models.Model):
 
 class Story (BaseModel):
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='stories')
-    expiration_time = models.DateTimeField()
 
     def __str__(self):
         return f'Story của {self.user.username}'

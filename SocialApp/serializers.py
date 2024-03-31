@@ -2,10 +2,23 @@ from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework_recursive.fields import RecursiveField
 
-from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost,Story,Friend
+from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost,Story,Friend,Lecturer
+
+class UserSerializer(serializers.ModelSerializer):
+    avatar_user = serializers.SerializerMethodField(source='avatar_user')
+    def get_avatar_user(self, user):
+        if user.avatar_user:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(user.avatar_user)
+            return user.avatar_user.url
+        return None
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'email', 'username', 'avatar_user', 'cover_photo', 'role', 'verified']
 class StorySerializer(serializers.ModelSerializer):
     media_file = SerializerMethodField()
-
+    user = UserSerializer()
     def get_media_file(self, instance):
         if instance.media.exists():
             return instance.media.first().media_file.url + ".mp4"
@@ -15,19 +28,10 @@ class StorySerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'media_file','created_at']
 
 class FormerSerializer(serializers.ModelSerializer):
-    avatar_user = SerializerMethodField(source='avatar_user')
-    stories = StorySerializer(many=True, read_only=True)
-    def get_avatar_user(self, user):
-        if user.avatar_user:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(user.avatar_user)
-            return user.avatar_user.url
-        return None
-    class Meta:
+
+    class Meta(UserSerializer.Meta):
         model = Former
-        fields = ['id', 'first_name', 'last_name', 'email', 'username', 'password', 'avatar_user', 'cover_photo',
-                  'role', 'verified','stories']
+        fields = UserSerializer.Meta.fields
         extra_kwargs = {
             'password': {'write_only': True},
             'role': {'read_only': True}
@@ -35,23 +39,15 @@ class FormerSerializer(serializers.ModelSerializer):
 
 
 class LecturerSerializer(serializers.ModelSerializer):
-    avatar_user = SerializerMethodField(source='avatar_user')
-    stories = StorySerializer(many=True, read_only=True)
-    def get_avatar_user(self, user):
-        if user.avatar_user:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(user.avatar_user)
-            return user.avatar_user.url
-        return None
-    class Meta:
-        model = Former
-        fields = ['id', 'first_name', 'last_name', 'email', 'username', 'password', 'avatar_user', 'cover_photo',
-                  'role','stories']
+
+    class Meta(UserSerializer.Meta):
+        model = Lecturer
+        fields = UserSerializer.Meta.fields + ['stories']
         extra_kwargs = {
             'password': {'write_only': True},
             'role': {'read_only': True}
         }
+
 
 
 class ProfileSerializer(serializers.ModelSerializer):

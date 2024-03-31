@@ -34,7 +34,6 @@ class FormerManager(models.Manager):
 
 class Former(User):
     objects = FormerManager()
-
     class Meta:
         proxy = True
 

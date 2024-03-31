@@ -366,7 +366,6 @@ class StoryViewSet(viewsets.ViewSet,generics.ListAPIView):
     def create_story(self, request):
         try:
             user = request.user
-            # Kiểm tra xem có tải lên bất kỳ tệp phương tiện nào không
             if 'media_files' not in request.FILES or len(request.FILES.getlist('media_files')) == 0:
                 return Response({"error": "At least one media file (image or video) is required."},
                                 status=status.HTTP_400_BAD_REQUEST)

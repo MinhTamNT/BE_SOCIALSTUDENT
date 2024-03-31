@@ -3,11 +3,20 @@ from rest_framework.fields import SerializerMethodField
 from rest_framework_recursive.fields import RecursiveField
 
 from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost,Story,Friend
+class StorySerializer(serializers.ModelSerializer):
+    media_file = SerializerMethodField()
 
+    def get_media_file(self, instance):
+        if instance.media.exists():
+            return instance.media.first().media_file.url + ".mp4"
+        return None
+    class Meta:
+        model = Story
+        fields = ['id', 'user', 'media_file','created_at']
 
 class FormerSerializer(serializers.ModelSerializer):
     avatar_user = SerializerMethodField(source='avatar_user')
-
+    stories = StorySerializer(many=True, read_only=True)
     def get_avatar_user(self, user):
         if user.avatar_user:
             request = self.context.get('request')
@@ -18,7 +27,7 @@ class FormerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Former
         fields = ['id', 'first_name', 'last_name', 'email', 'username', 'password', 'avatar_user', 'cover_photo',
-                  'role', 'verified']
+                  'role', 'verified','stories']
         extra_kwargs = {
             'password': {'write_only': True},
             'role': {'read_only': True}
@@ -27,6 +36,7 @@ class FormerSerializer(serializers.ModelSerializer):
 
 class LecturerSerializer(serializers.ModelSerializer):
     avatar_user = SerializerMethodField(source='avatar_user')
+    stories = StorySerializer(many=True, read_only=True)
     def get_avatar_user(self, user):
         if user.avatar_user:
             request = self.context.get('request')
@@ -37,7 +47,7 @@ class LecturerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Former
         fields = ['id', 'first_name', 'last_name', 'email', 'username', 'password', 'avatar_user', 'cover_photo',
-                  'role']
+                  'role','stories']
         extra_kwargs = {
             'password': {'write_only': True},
             'role': {'read_only': True}
@@ -84,10 +94,7 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'user', 'post', 'comment', 'parent_comment', 'have_replies', 'created_at']
 
-class StorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Story
-        fields = '__all__'
+
 class FriendSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friend

@@ -2,9 +2,11 @@ from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework_recursive.fields import RecursiveField
 
-from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost,Story,Friend,Lecturer
+from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost,Story,Friend,Lecturer,StoryMedia
 
-class UserSerializer(serializers.ModelSerializer):
+
+
+class BaseModalUser(serializers.ModelSerializer):
     avatar_user = serializers.SerializerMethodField(source='avatar_user')
     def get_avatar_user(self, user):
         if user.avatar_user:
@@ -13,22 +15,42 @@ class UserSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(user.avatar_user)
             return user.avatar_user.url
         return None
+
+class UserSerializer(BaseModalUser):
     class Meta:
         model = User
         fields = ['id', 'first_name', 'last_name', 'email', 'username', 'avatar_user', 'cover_photo', 'role', 'verified']
+class StoryMediaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryMedia
+        fields = ['media_type', 'media_file']
 class StorySerializer(serializers.ModelSerializer):
     media_file = SerializerMethodField()
     user = UserSerializer()
+
     def get_media_file(self, instance):
-        if instance.media.exists():
-            return instance.media.first().media_file.url + ".mp4"
+        video_media = instance.media.filter(media_type='video').first()
+        if video_media:
+            return video_media.media_file.url + (".mp4")
+        else:
+            image_media = instance.media.filter(media_type='image')
+            if image_media.exists():
+                return [media.media_file.url for media in image_media]
         return None
     class Meta:
         model = Story
         fields = ['id', 'user', 'media_file','created_at']
 
-class FormerSerializer(serializers.ModelSerializer):
+class FormerSerializer(BaseModalUser):
+    avatar_user = serializers.SerializerMethodField(source='avatar_user')
 
+    def get_avatar_user(self, user):
+        if user.avatar_user:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(user.avatar_user)
+            return user.avatar_user.url
+        return None
     class Meta(UserSerializer.Meta):
         model = Former
         fields = UserSerializer.Meta.fields
@@ -38,8 +60,15 @@ class FormerSerializer(serializers.ModelSerializer):
         }
 
 
-class LecturerSerializer(serializers.ModelSerializer):
-
+class LecturerSerializer(BaseModalUser):
+    avatar_user = serializers.SerializerMethodField(source='avatar_user')
+    def get_avatar_user(self, user):
+        if user.avatar_user:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(user.avatar_user)
+            return user.avatar_user.url
+        return None
     class Meta(UserSerializer.Meta):
         model = Lecturer
         fields = UserSerializer.Meta.fields + ['stories']

@@ -1,8 +1,11 @@
+from dataclasses import fields
+from pyexpat import model
+
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework_recursive.fields import RecursiveField
 
-from SocialApp.models import Former, User, Post, Image, Comment, ReactionPost,Story,Friend,Lecturer,StoryMedia
+from SocialApp.models import Former, User, Post,  Comment, ReactionPost,Story,Friend,Lecturer,StoryMedia,PostMedia
 
 
 
@@ -59,7 +62,10 @@ class FormerSerializer(BaseModalUser):
             'role': {'read_only': True}
         }
 
-
+class PostMediaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostMedia
+        fields = "__all__"
 class LecturerSerializer(BaseModalUser):
     avatar_user = serializers.SerializerMethodField(source='avatar_user')
     def get_avatar_user(self, user):
@@ -85,26 +91,21 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['id', 'first_name', 'last_name', 'email', 'avatar_user', 'cover_photo', 'role']
 
 
-class ImageSerializer(serializers.ModelSerializer):
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        if instance.image:
-            representation['image'] = instance.image.url
-        return representation
-    class Meta:
-        model = Image
-        fields = ['image', 'created_at']
-
-
 class PostSerializer(serializers.ModelSerializer):
-    image = SerializerMethodField()
-    def get_image(self, obj):
-        images = Image.objects.filter(post_id=obj.id)
-        serializer = ImageSerializer(images, many=True).data
-        return serializer
+    user = UserSerializer(read_only=True)
+    media_file = serializers.SerializerMethodField()
+
+    def get_media_file(self, post):
+        media_files = post.media.all()
+
+        # Extract URLs of media files and return as a list
+        media_file_urls = [media.media_file.url.replace("/https%3A/", "https://") for media in media_files]
+
+        return media_file_urls
+
     class Meta:
         model = Post
-        fields = ['id', 'user', 'title', 'content', 'image', 'on_comment']
+        fields = ['id', 'user', 'content', 'media_file', 'on_comment']
 
 class ReactionSerializer(serializers.ModelSerializer):
     class Meta:

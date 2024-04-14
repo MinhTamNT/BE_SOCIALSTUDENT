@@ -50,12 +50,9 @@ class Lecturer(User):
 
 class Post(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
-    title = models.CharField(max_length=255)
     content = models.TextField()
     on_comment = models.BooleanField(default=True)
 
-    def __str__(self):
-        return f'{self.user.username}: {self.title}'
 
 class ReactionPost(BaseModel):
     class React(models.TextChoices):
@@ -69,11 +66,9 @@ class ReactionPost(BaseModel):
     class Meta:
         unique_together = ('user', 'post')
 
-class Image(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='images')
-    image = CloudinaryField('image', blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
+class PostMedia(BaseModel):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='media')
+    media_file = models.FileField(upload_to='post_media')
 
 
 class Comment(models.Model):

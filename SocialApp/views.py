@@ -13,9 +13,9 @@ import cloudinary.uploader
 from BackendSocialFormer.celery import send_otp
 # from .utils import *
 from SocialApp import perms
-from SocialApp.models import User, Post, Image, Comment, ReactionPost,Story,Friend,StoryMedia
+from SocialApp.models import User, Post, PostMedia, Comment, ReactionPost,Story,Friend,StoryMedia
 from SocialApp.serializers import FormerSerializer, LecturerSerializer, PostSerializer, CommentSerializer, \
-    ReactionSerializer,StorySerializer,FriendSerializer
+    ReactionSerializer,StorySerializer,FriendSerializer,PostMediaSerializer
 
 
 # Create your views here.
@@ -178,7 +178,7 @@ class AccountViewSet(viewsets.ViewSet):
 
 
 
-class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView, generics.UpdateAPIView,
+class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView,
                   generics.DestroyAPIView):
     queryset = Post.objects.all().order_by('-id')
     serializer_class = PostSerializer
@@ -189,30 +189,35 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView
             self.permission_classes = [perms.IsOwner]
         return super(PostViewSet, self).get_permissions()
 
-    def list(self, request):
-        try:
-            user = request.user
-            posts = Post.objects.filter(user=user).order_by('-id')
-            return Response(data=PostSerializer(posts, many=True, context={'request': request}).data,
-                            status=status.HTTP_200_OK)
-        except Exception as e:
-            print(f"Error: {str(e)}")
-            return Response({str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def create(self, request):
+    @action(methods=['POST'], url_path="create_post", detail=False)
+    def create_post(self, request):
         try:
             user = request.user
             data = request.data
             post = Post.objects.create(
                 user=user,
-                title=data['title'],
                 content=data['content']
             )
-            for image in request.FILES.getlist('image'):
-                res = cloudinary.uploader.upload(image, folder='post_image/')
-                Image.objects.create(post=post, image=res['secure_url'])
-            return Response(data=PostSerializer(post, context={'request': request}).data,
-                            status=status.HTTP_201_CREATED)
+            media_files = []
+            for media_file in request.FILES.getlist('media_file'):
+                uploaded_file = cloudinary.uploader.upload_large(media_file)
+                media = PostMedia.objects.create(
+                    post=post,
+                    media_file=uploaded_file['secure_url']
+                )
+                media_files.append(media)
+
+            # Serialize the post and its associated media files
+            post_serializer = PostSerializer(post, context={'request': request})
+            media_serializer = PostMediaSerializer(media_files, many=True, context={'request': request})
+
+            # Construct the response data
+            response_data = {
+                'post': post_serializer.data,
+                'media_files': media_serializer.data
+            }
+
+            return Response(data=response_data, status=status.HTTP_201_CREATED)
         except Exception as e:
             print(f"Error: {str(e)}")
             return Response({'Error': 'Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -361,7 +366,7 @@ class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyA
 class StoryViewSet(viewsets.ViewSet,generics.ListAPIView):
     queryset = Story.objects.all()
     serializer_class = StorySerializer
-
+    permission_classes = [permissions.IsAuthenticated]
     @action(detail=False, methods=['POST'], url_path='create_story')
     def create_story(self, request):
         try:

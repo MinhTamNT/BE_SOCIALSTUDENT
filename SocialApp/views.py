@@ -189,14 +189,18 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView
             self.permission_classes = [perms.IsOwner]
         return super(PostViewSet, self).get_permissions()
 
+
+
     @action(methods=['POST'], url_path="create_post", detail=False)
     def create_post(self, request):
         try:
             user = request.user
             data = request.data
+            content = data.get('content')  # Lấy nội dung bài post từ request data
+
             post = Post.objects.create(
                 user=user,
-                content=data['content']
+                content=content
             )
             media_files = []
             for media_file in request.FILES.getlist('media_file'):
@@ -211,7 +215,6 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView
             post_serializer = PostSerializer(post, context={'request': request})
             media_serializer = PostMediaSerializer(media_files, many=True, context={'request': request})
 
-            # Construct the response data
             response_data = {
                 'post': post_serializer.data,
                 'media_files': media_serializer.data

@@ -61,7 +61,7 @@ class ReactionPost(BaseModel):
         HEART = 'HEART', ('Heart')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reactions')
-    reaction_type = models.CharField(max_length=10, choices=React.choices)
+    reaction_type = models.CharField(max_length=255, choices=React.choices)
 
     class Meta:
         unique_together = ('user', 'post')

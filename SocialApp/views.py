@@ -182,7 +182,6 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView
                   generics.DestroyAPIView):
     queryset = Post.objects.all().order_by('-id')
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         if self.action in ['update', 'partial_update', 'destroy', 'on_comment']:
@@ -196,8 +195,7 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView
         try:
             user = request.user
             data = request.data
-            content = data.get('content')  # Lấy nội dung bài post từ request data
-
+            content = data.get('content')
             post = Post.objects.create(
                 user=user,
                 content=content
@@ -242,7 +240,7 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView
         try:
             user = request.user
             post = self.get_object()
-            if request.methods.__eq__('POST'):
+            if request.method == 'POST':
                 reacted, react = ReactionPost.objects.update_or_create(
                     post=post,
                     user=user,
@@ -254,16 +252,16 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.UpdateAPIView
 
                 return Response(data=ReactionSerializer(reacted).data,
                                 status=status.HTTP_201_CREATED)
-            elif request.methods.__eq__('GET'):
+            elif request.method == 'GET':
                 react = ReactionPost.objects.filter(post=post)
                 return Response(data=ReactionSerializer(react, many=True).data,
                                 status=status.HTTP_200_OK)
-            elif request.methods.__eq__('DELETE'):
+            elif request.method == 'DELETE':
                 react = ReactionPost.objects.filter(post=post, user=user)
                 react.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             else:
-                return Response(status=status.HTTP_400_BpoAD_REQUEST)
+                return Response(status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print(f"Error: {str(e)}")
             return Response({str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

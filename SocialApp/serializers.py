@@ -94,23 +94,31 @@ class ProfileSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     media_file = serializers.SerializerMethodField()
+    reaction = serializers.SerializerMethodField()
 
     def get_media_file(self, post):
         media_files = post.media.all()
-
-        # Extract URLs of media files and return as a list
         media_file_urls = [media.media_file.url.replace("/https%3A/", "https://") for media in media_files]
-
         return media_file_urls
+
+    def get_reaction(self, post):
+        reaction = ReactionPost.objects.filter(post=post)
+        reaction_serializer = ReactionSerializer(reaction, many=True)
+        return reaction_serializer.data
 
     class Meta:
         model = Post
-        fields = ['id', 'user', 'content', 'media_file', 'on_comment']
+        fields = ['id', 'user', 'content', 'media_file', 'on_comment','created_at','reaction']
+
 
 class ReactionSerializer(serializers.ModelSerializer):
+    user_id = serializers.SerializerMethodField()  # Custom field để hiển thị id của người dùng
+
+    def get_user_id(self, obj):
+        return obj.user.id
     class Meta:
         model = ReactionPost
-        fields = ['id', 'post', 'user', 'reaction_type']
+        fields = ['id', 'user_id', 'reaction_type']
 
 class CommentSerializer(serializers.ModelSerializer):
     have_replies = serializers.SerializerMethodField()
